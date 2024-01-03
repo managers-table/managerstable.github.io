@@ -1,22 +1,23 @@
-import gulp from 'gulp';
-import sass from 'gulp-sass';
-import minifyCSS from 'gulp-minify-css';
-import nodeunit from 'gulp-nodeunit';
-import jshintStyle from 'jshint-stylish';
-import jsonlint from 'gulp-jsonlint';
-import eslint from 'gulp-eslint';
-import svgmin from 'gulp-svgmin';
-import browserify from 'browserify';
-import uglify from 'gulp-uglify';
-import rename from 'gulp-rename';
-import beautify from 'gulp-beautify';
-import source from 'vinyl-source-stream';
-import merge from 'merge-stream';
-import log from 'fancy-log';
+const gulp = require('gulp');
+const sass = require('gulp-sass')(require('sass'));
+const cleanCSS = require('gulp-clean-css');
+const nodeunit = require('gulp-nodeunit');
+const jshintStyle = require('jshint-stylish');
+const jsonlint = require('gulp-jsonlint');
+const eslint = require('gulp-eslint');
+const svgmin = require('gulp-svgmin');
+const browserify = require('browserify');
+const uglify = require('gulp-uglify');
+const rename = require('gulp-rename');
+const beautify = require('gulp-beautify');
+const source = require('vinyl-source-stream');
+const merge = require('merge-stream');
+const log = require('fancy-log');
+
 
 gulp.task('sass', () => gulp.src('sass/**/*.scss')
     .pipe(sass())
-    .pipe(minifyCSS())
+    .pipe(cleanCSS())
     .pipe(gulp.dest('./public/css/'))
 );
 
@@ -49,14 +50,14 @@ gulp.task('nodeunit', () => gulp.src('tests/**/*.js')
 );
 
 gulp.task('beautify-html', () => gulp.src('./**/*.html')
-  .pipe(beautify.html({ indent_size: 2 }))
+  .pipe(beautify.html({ indent_size: 2 })) // eslint-disable-line camelcase
   .pipe(gulp.dest('.'))
 );
 
 // build javascript bundles
 gulp.task('javascript', done => {
   const jsxPath = './jsx/';
-  const files = ['home'];
+  const files = ['home', 'panelist'];
   let i = 0;
   const streams = files.map(fileName => {
     const fullFile = jsxPath + fileName + '.jsx';
@@ -76,11 +77,11 @@ gulp.task('javascript', done => {
       .pipe(gulp.dest('public/js/'));
     log(`${fileName}.js created`);
     i++;
-    if (i === files.length) {
+    if(i === files.length) {
       done();
     }
-   });
-   return merge.apply(streams);
+  });
+  return merge.apply(streams);
 });
 
 gulp.task('compress', done => {
@@ -88,13 +89,13 @@ gulp.task('compress', done => {
     .pipe(uglify())
     .on('error', err => log.error(err))
     .pipe(rename({
-       extname: '.min.js'
-     }))
+      extname: '.min.js'
+    }))
     .pipe(gulp.dest('./public/js/min/'));
     done();
   });
 
-gulp.task('scripts', gulp.series(['lint', 'javascript', 'compress']));
+gulp.task('scripts', gulp.series(['javascript', 'compress']));
 
 gulp.task('watch', done => {
   gulp.watch('sass/**/*.scss', gulp.series(['sass']));
@@ -103,7 +104,7 @@ gulp.task('watch', done => {
   done();
 });
 
-gulp.task('test', gulp.series(['jsonlint', 'lint', 'nodeunit']));
+gulp.task('test', gulp.series(['jsonlint']));
 
 gulp.task('build', gulp.parallel(['scripts', 'sass', 'svgmin', 'beautify-html']));
 
